@@ -14,7 +14,9 @@ import {
   Star,
   Upload,
   FileText,
+  Lock,
 } from "lucide-react";
+import { UpgradeModal } from "@/components/upgrade-modal";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatCard } from "@/components/ui/stat-card";
@@ -84,7 +86,15 @@ const EMPTY = {
   personal_rating: "0",
 };
 
-export function VendorsClient({ weddingId, initial }: { weddingId: string; initial: Vendor[] }) {
+export function VendorsClient({
+  weddingId,
+  initial,
+  premium,
+}: {
+  weddingId: string;
+  initial: Vendor[];
+  premium: boolean;
+}) {
   const [vendors, setVendors] = useState<Vendor[]>(initial);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | NegotiationStatus>("all");
@@ -93,6 +103,7 @@ export function VendorsClient({ weddingId, initial }: { weddingId: string; initi
   const [form, setForm] = useState({ ...EMPTY });
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState<string | null>(null);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
 
   const stats = useMemo(
     () => ({
@@ -185,6 +196,10 @@ export function VendorsClient({ weddingId, initial }: { weddingId: string; initi
   }
 
   async function uploadContract(v: Vendor, file: File) {
+    if (!premium) {
+      setUpgradeOpen(true);
+      return;
+    }
     setUploading(v.id);
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -360,7 +375,7 @@ export function VendorsClient({ weddingId, initial }: { weddingId: string; initi
                       >
                         <FileText className="h-3.5 w-3.5" /> Ver contrato
                       </button>
-                    ) : (
+                    ) : premium ? (
                       <label className="inline-flex cursor-pointer items-center gap-1 text-muted-foreground hover:text-foreground">
                         <Upload className="h-3.5 w-3.5" />
                         {uploading === v.id ? "Enviando…" : "Anexar contrato"}
@@ -374,6 +389,13 @@ export function VendorsClient({ weddingId, initial }: { weddingId: string; initi
                           }}
                         />
                       </label>
+                    ) : (
+                      <button
+                        onClick={() => setUpgradeOpen(true)}
+                        className="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground"
+                      >
+                        <Lock className="h-3.5 w-3.5" /> Anexar contrato
+                      </button>
                     )}
                   </div>
                 </div>
@@ -485,6 +507,13 @@ export function VendorsClient({ weddingId, initial }: { weddingId: string; initi
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <UpgradeModal
+        open={upgradeOpen}
+        onOpenChange={setUpgradeOpen}
+        title="Upload de contratos é Premium"
+        description="Ative o Premium para anexar PDFs de contratos e ter tudo organizado num só lugar."
+      />
     </div>
   );
 }

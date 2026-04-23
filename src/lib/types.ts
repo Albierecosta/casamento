@@ -1,3 +1,5 @@
+export type Plan = "free" | "premium";
+
 export type Wedding = {
   id: string;
   owner_id: string;
@@ -12,6 +14,9 @@ export type Wedding = {
   style: string | null;
   estimated_guests: number;
   onboarded: boolean;
+  plan: Plan;
+  plan_expires_at: string | null;
+  plan_updated_at: string | null;
   created_at: string;
   updated_at: string;
 };

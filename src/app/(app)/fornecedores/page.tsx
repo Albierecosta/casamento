@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireWedding } from "@/lib/wedding";
 import { VendorsClient } from "./vendors-client";
 import type { Vendor } from "@/lib/types";
+import { isPremium } from "@/lib/plan";
 
 export default async function VendorsPage() {
   const wedding = await requireWedding();
@@ -11,5 +12,11 @@ export default async function VendorsPage() {
     .select("*")
     .eq("wedding_id", wedding.id)
     .order("name");
-  return <VendorsClient weddingId={wedding.id} initial={(data as Vendor[]) ?? []} />;
+  return (
+    <VendorsClient
+      weddingId={wedding.id}
+      initial={(data as Vendor[]) ?? []}
+      premium={isPremium(wedding)}
+    />
+  );
 }

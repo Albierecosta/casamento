@@ -38,6 +38,7 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith("/checklist") ||
     pathname.startsWith("/fornecedores") ||
     pathname.startsWith("/configuracoes") ||
+    pathname.startsWith("/planos") ||
     pathname.startsWith("/onboarding");
 
   if (!user && isProtected) {

@@ -9,7 +9,9 @@ import {
   MoreVertical,
   Download,
   AlertTriangle,
+  Lock,
 } from "lucide-react";
+import { UpgradeModal } from "@/components/upgrade-modal";
 import { toast } from "sonner";
 import {
   PieChart,
@@ -94,14 +96,16 @@ type Props = {
   initial: BudgetItem[];
   initialBudget: number;
   vendors: Pick<Vendor, "id" | "name">[];
+  premium: boolean;
 };
 
-export function BudgetClient({ weddingId, initial, initialBudget, vendors }: Props) {
+export function BudgetClient({ weddingId, initial, initialBudget, vendors, premium }: Props) {
   const [items, setItems] = useState<BudgetItem[]>(initial);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<BudgetItem | null>(null);
   const [form, setForm] = useState({ ...EMPTY });
   const [saving, setSaving] = useState(false);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
 
   const totals = useMemo(() => {
     const planned = items.reduce((s, i) => s + Number(i.planned_amount || 0), 0);
@@ -203,6 +207,10 @@ export function BudgetClient({ weddingId, initial, initialBudget, vendors }: Pro
   }
 
   function exportPDF() {
+    if (!premium) {
+      setUpgradeOpen(true);
+      return;
+    }
     // Print-to-PDF approach: opens a print-friendly window the user can save as PDF.
     if (typeof window === "undefined") return;
     const win = window.open("", "_blank", "width=900,height=1000");
@@ -254,7 +262,7 @@ export function BudgetClient({ weddingId, initial, initialBudget, vendors }: Pro
     <div className="space-y-6">
       <PageHeader title="Orçamento" description="Planeje, acompanhe e mantenha o controle dos gastos.">
         <Button variant="outline" onClick={exportPDF}>
-          <Download className="h-4 w-4" /> Exportar PDF
+          {premium ? <Download className="h-4 w-4" /> : <Lock className="h-4 w-4" />} Exportar PDF
         </Button>
         <Button onClick={openCreate}>
           <Plus className="h-4 w-4" /> Novo item
@@ -567,6 +575,13 @@ export function BudgetClient({ weddingId, initial, initialBudget, vendors }: Pro
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <UpgradeModal
+        open={upgradeOpen}
+        onOpenChange={setUpgradeOpen}
+        title="Export PDF é Premium"
+        description="Ative o Premium para exportar o orçamento em PDF e compartilhar com fornecedores."
+      />
     </div>
   );
 }

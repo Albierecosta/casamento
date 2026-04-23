@@ -13,6 +13,7 @@ import {
   Settings,
   Menu,
   LogOut,
+  Crown,
 } from "lucide-react";
 import {
   Dialog,
@@ -34,6 +35,7 @@ const NAV = [
   { href: "/orcamento", label: "Orçamento", icon: Wallet },
   { href: "/checklist", label: "Checklist", icon: ListChecks },
   { href: "/fornecedores", label: "Fornecedores", icon: Store },
+  { href: "/planos", label: "Planos", icon: Crown },
   { href: "/configuracoes", label: "Configurações", icon: Settings },
 ];
 

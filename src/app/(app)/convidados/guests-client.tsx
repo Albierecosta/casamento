@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Plus, Search, Pencil, Trash2, Download, Users, Crown, MoreVertical } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, Download, Users, Crown, MoreVertical, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatCard } from "@/components/ui/stat-card";
@@ -10,6 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Card, CardContent } from "@/components/ui/card";
+import { UpgradeModal } from "@/components/upgrade-modal";
+import { PLAN_LIMITS } from "@/lib/plan";
 import {
   Dialog,
   DialogContent,
@@ -37,7 +39,7 @@ import { createClient } from "@/lib/supabase/client";
 import type { Guest, GuestGroup, GuestStatus, InvitedBy } from "@/lib/types";
 import { GUEST_GROUP_LABELS } from "@/lib/types";
 
-type Props = { weddingId: string; initial: Guest[] };
+type Props = { weddingId: string; initial: Guest[]; premium: boolean };
 
 const EMPTY = {
   name: "",
@@ -53,7 +55,7 @@ const EMPTY = {
   invited_by: "ambos" as InvitedBy,
 };
 
-export function GuestsClient({ weddingId, initial }: Props) {
+export function GuestsClient({ weddingId, initial, premium }: Props) {
   const [guests, setGuests] = useState<Guest[]>(initial);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | GuestStatus>("all");
@@ -62,6 +64,14 @@ export function GuestsClient({ weddingId, initial }: Props) {
   const [editing, setEditing] = useState<Guest | null>(null);
   const [form, setForm] = useState({ ...EMPTY });
   const [saving, setSaving] = useState(false);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const [upgradeReason, setUpgradeReason] = useState<{ title: string; description: string }>({
+    title: "Desbloqueie o plano Premium",
+    description: "Vocês chegaram ao limite do plano grátis.",
+  });
+
+  const guestLimit = PLAN_LIMITS.free.guests;
+  const reachedLimit = !premium && guests.length >= guestLimit;
 
   const stats = useMemo(() => {
     const total = guests.length;
@@ -84,6 +94,14 @@ export function GuestsClient({ weddingId, initial }: Props) {
   }, [guests, search, statusFilter, groupFilter]);
 
   function openCreate() {
+    if (reachedLimit) {
+      setUpgradeReason({
+        title: `Limite de ${guestLimit} convidados atingido`,
+        description: "O plano grátis permite até 20 convidados. Ative o Premium para lista ilimitada.",
+      });
+      setUpgradeOpen(true);
+      return;
+    }
     setEditing(null);
     setForm({ ...EMPTY });
     setDialogOpen(true);
@@ -167,6 +185,14 @@ export function GuestsClient({ weddingId, initial }: Props) {
   }
 
   function exportCSV() {
+    if (!premium) {
+      setUpgradeReason({
+        title: "Export CSV é Premium",
+        description: "Ative o Premium para exportar a lista completa em CSV.",
+      });
+      setUpgradeOpen(true);
+      return;
+    }
     if (!guests.length) return toast.message("Sem convidados para exportar");
     const header = [
       "nome",
@@ -214,12 +240,34 @@ export function GuestsClient({ weddingId, initial }: Props) {
     <div className="space-y-6">
       <PageHeader title="Convidados" description="Controle RSVP, grupos, mesas e acompanhantes.">
         <Button variant="outline" onClick={exportCSV}>
-          <Download className="h-4 w-4" /> Exportar CSV
+          {premium ? <Download className="h-4 w-4" /> : <Lock className="h-4 w-4" />} Exportar CSV
         </Button>
         <Button onClick={openCreate}>
           <Plus className="h-4 w-4" /> Novo convidado
         </Button>
       </PageHeader>
+
+      {!premium && (
+        <div className="flex flex-col gap-2 rounded-lg border border-gold/40 bg-gold/10 p-3 text-sm md:flex-row md:items-center md:justify-between">
+          <span>
+            Plano grátis: <strong>{guests.length}/{guestLimit}</strong> convidados usados
+            {reachedLimit && " — limite atingido"}
+          </span>
+          <Button
+            size="sm"
+            variant="gold"
+            onClick={() => {
+              setUpgradeReason({
+                title: "Desbloqueie convidados ilimitados",
+                description: "Ative o Premium para ter lista sem limites e recursos exclusivos.",
+              });
+              setUpgradeOpen(true);
+            }}
+          >
+            Fazer upgrade
+          </Button>
+        </div>
+      )}
 
       <div className="grid gap-3 md:grid-cols-4">
         <StatCard label="Total" value={stats.total} icon={<Users className="h-5 w-5" />} />
@@ -453,6 +501,13 @@ export function GuestsClient({ weddingId, initial }: Props) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <UpgradeModal
+        open={upgradeOpen}
+        onOpenChange={setUpgradeOpen}
+        title={upgradeReason.title}
+        description={upgradeReason.description}
+      />
     </div>
   );
 }

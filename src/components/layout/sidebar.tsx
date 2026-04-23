@@ -12,12 +12,15 @@ import {
   Settings,
   LogOut,
   Sparkles,
+  Crown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import type { Wedding } from "@/lib/types";
 import { countdown, formatDate } from "@/lib/utils";
+import { isPremium } from "@/lib/plan";
 
 const NAV = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -26,12 +29,14 @@ const NAV = [
   { href: "/orcamento", label: "Orçamento", icon: Wallet },
   { href: "/checklist", label: "Checklist", icon: ListChecks },
   { href: "/fornecedores", label: "Fornecedores", icon: Store },
+  { href: "/planos", label: "Planos", icon: Crown },
   { href: "/configuracoes", label: "Configurações", icon: Settings },
 ];
 
 export function Sidebar({ wedding, userEmail }: { wedding: Wedding; userEmail: string | null }) {
   const pathname = usePathname();
   const cd = countdown(wedding.wedding_date);
+  const premium = isPremium(wedding);
 
   return (
     <aside className="hidden md:flex w-64 shrink-0 flex-col border-r border-border/60 bg-card/50">
@@ -44,7 +49,16 @@ export function Sidebar({ wedding, userEmail }: { wedding: Wedding; userEmail: s
 
       <div className="p-4">
         <div className="rounded-xl border border-border/60 bg-card p-4">
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Nosso grande dia</p>
+          <div className="flex items-center justify-between">
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Nosso grande dia</p>
+            {premium ? (
+              <Badge variant="gold" className="gap-1 text-[10px]">
+                <Crown className="h-3 w-3" /> Premium
+              </Badge>
+            ) : (
+              <Badge variant="muted" className="text-[10px]">Grátis</Badge>
+            )}
+          </div>
           <p className="mt-1 font-display text-lg leading-tight">{wedding.couple_name || "Sem nome"}</p>
           <p className="text-xs text-muted-foreground">
             {wedding.wedding_date ? formatDate(wedding.wedding_date) : "Data a definir"}
